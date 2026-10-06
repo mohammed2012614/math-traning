@@ -1,0 +1,46 @@
+body {
+    font-family: 'Tajawal', sans-serif;
+    user-select: none;
+}
+
+.keypad-btn {
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    transition: all 0.1s ease;
+}
+
+.keypad-btn:active {
+    background-color: #0ea5e9;
+    color: #0f172a;
+    transform: scale(0.95);
+}
+
+.opponent-keypad-btn {
+    background-color: #2e1065;
+    border: 1px solid #4c1d95;
+    transition: all 0.1s ease;
+}
+
+.opponent-keypad-btn:active {
+    background-color: #f43f5e;
+    color: #fff;
+    transform: scale(0.95);
+}
+
+@keyframes pulse-border {
+    0% {
+        border-color: rgba(244, 63, 94, 0.4);
+    }
+
+    50% {
+        border-color: rgba(244, 63, 94, 1);
+    }
+
+    100% {
+        border-color: rgba(244, 63, 94, 0.4);
+    }
+}
+
+.opponent-active {
+    animation: pulse-border 0.5s infinite;
+}

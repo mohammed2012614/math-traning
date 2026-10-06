@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي الرياضيات - المجموعات المتكاملة والكيبوردات المزدوجة</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body
+    class="bg-slate-950 text-white min-h-screen flex flex-col justify-between p-2 selection:bg-cyan-500 selection:text-slate-950">
+
+    <!-- رأس الصفحة -->
+    <header class="text-center py-2 border-b border-slate-800/60 max-w-5xl mx-auto w-full">
+        <h1
+            class="text-xl md:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-indigo-500">
+            ⚡ تحدي الرياضيات - إدارة المجموعات والكيبوردين ⚡
+        </h1>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="max-w-5xl mx-auto w-full my-auto py-2">
+
+        <!-- 1. شاشة الإعدادات -->
+        <div id="setup-screen"
+            class="bg-slate-900/90 backdrop-blur border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4 max-w-lg mx-auto">
+            <h2 class="text-lg font-bold text-cyan-400 text-center">أهلاً بك! جهز إعدادات المعركة</h2>
+
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">اسمك الكريم</label>
+                <input type="text" id="player-name"
+                    class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-cyan-500"
+                    placeholder="اكتب اسمك...">
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-400 mb-1">اختر نمط اللعب</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button onclick="setGameMode('bot')" id="mode-bot"
+                        class="bg-indigo-600 font-bold py-2.5 rounded-xl border border-indigo-500 text-xs transition">🤖
+                        ضد البوت</button>
+                    <button onclick="setGameMode('local')" id="mode-local"
+                        class="bg-slate-800 font-bold py-2.5 rounded-xl border border-slate-700 text-xs transition text-slate-400">👥
+                        نفس الجهاز (كيبوردين)</button>
+                    <button onclick="setGameMode('online')" id="mode-online"
+                        class="bg-slate-800 font-bold py-2.5 rounded-xl border border-slate-700 text-xs transition text-slate-400">🌐
+                        أونلاين</button>
+                </div>
+            </div>
+
+            <!-- إعدادات البوت -->
+            <div id="bot-options" class="space-y-2 pt-2 border-t border-slate-800">
+                <label class="block text-xs text-slate-400">مستوى ذكاء وسرعة البوت</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="setBotDiff('easy')" id="diff-easy"
+                        class="bg-slate-800 py-2 rounded-xl text-xs border border-slate-700">🟢 سهل (8 ث)</button>
+                    <button onclick="setBotDiff('impossible')" id="diff-impossible"
+                        class="bg-cyan-600 py-2 rounded-xl text-xs border border-cyan-500 font-bold">💀 مستحيل (1
+                        ث)</button>
+                </div>
+            </div>
+
+            <!-- إعدادات أونلاين والمجموعات (إضافة جديدة: إنشاء، انضمام، عامة/خاصة، عدد الفائزين، عددنا، قبول/طرد) -->
+            <div id="online-options" class="hidden space-y-3 pt-2 border-t border-slate-800">
+                <div class="flex gap-2">
+                    <button onclick="showCreateRoomPanel()"
+                        class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 rounded-xl text-xs transition">➕
+                        إنشاء مجموعة</button>
+                    <button onclick="showJoinRoomPanel()"
+                        class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition">🔗
+                        انضمام لمجموعة</button>
+                </div>
+
+                <!-- لوحة إنشاء مجموعة -->
+                <div id="create-room-panel"
+                    class="hidden space-y-2 bg-slate-950 p-3 rounded-xl border border-emerald-800/60">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">نوع المجموعة</label>
+                            <select id="room-privacy"
+                                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                                <option value="public">عامة</option>
+                                <option value="private">خاصة (تتطلب موافقة الرئيس)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">عدد اللاعبين</label>
+                            <input type="number" id="room-max-players" value="2" min="2" max="10"
+                                class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white text-center">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">عدد الفائزين الأوائل</label>
+                        <input type="number" id="room-winners-count" value="1" min="1" max="5"
+                            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white text-center">
+                    </div>
+                    <button onclick="submitCreateRoom()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 rounded-lg text-xs">تأكيد
+                        وإنشاء الغرفة</button>
+                </div>
+
+                <!-- لوحة انضمام لمجموعة -->
+                <div id="join-room-panel"
+                    class="hidden space-y-2 bg-slate-950 p-3 rounded-xl border border-cyan-800/60">
+                    <label class="block text-[10px] text-slate-400 mb-1">أدخل رمز المجموعة (الكود)</label>
+                    <input type="text" id="room-id-input"
+                        class="w-full bg-slate-900 border border-cyan-500 rounded-lg px-3 py-1.5 text-white text-xs font-mono text-center uppercase"
+                        placeholder="مثال: ROOM123">
+                    <button onclick="submitJoinRoom()"
+                        class="w-full bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold py-2 rounded-lg text-xs">انضمام
+                        الآن</button>
+                </div>
+
+                <!-- غرفة الانتظار وإدارة الأعضاء (للرئيس) -->
+                <div id="waiting-room-panel"
+                    class="hidden space-y-2 bg-slate-950 p-3 rounded-xl border border-amber-800">
+                    <div class="text-xs font-bold text-amber-400 flex justify-between items-center">
+                        <span>قاعة الانتظار - الكود: <span id="display-room-code"
+                                class="text-white font-mono"></span></span>
+                        <span id="admin-badge"
+                            class="hidden bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded text-[10px]">أنت رئيس
+                            المجموعة 👑</span>
+                    </div>
+                    <div class="text-[11px] text-slate-400">اللاعبون المتواجدون بالمجموعة:</div>
+                    <div id="room-players-list"
+                        class="space-y-1 max-h-32 overflow-y-auto bg-slate-900 p-2 rounded-lg text-xs"></div>
+                    <div id="admin-controls" class="hidden pt-2">
+                        <button onclick="adminStartGame()"
+                            class="w-full bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold py-2 rounded-lg text-xs">ابدأ
+                            المعركة للجميع 🚀</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="startApp()" id="start-btn"
+                class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black py-3 rounded-xl text-base shadow-lg transition active:scale-95">
+                🚀 ابدأ المعركة الآن
+            </button>
+        </div>
+
+        <!-- 2. شاشة اللعب التنافسي المزدوجة مع الكيبوردين المستقلين -->
+        <div id="game-screen" class="hidden space-y-3">
+
+            <!-- لوحة النتائج العلوية -->
+            <div
+                class="flex justify-between items-center bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 text-xs max-w-4xl mx-auto w-full">
+                <div>المستوى: <span id="current-level" class="font-black text-cyan-400 text-base">1</span> / 10</div>
+                <div id="status-info" class="text-amber-400 font-bold">المعركة مستمرة!</div>
+                <button onclick="quitGame()" class="text-rose-400 hover:text-rose-300 underline">خروج</button>
+            </div>
+
+            <!-- صندوق السؤال المشترك -->
+            <div
+                class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 text-center shadow-lg max-w-4xl mx-auto w-full">
+                <span class="text-[10px] text-slate-500 block mb-1">الناتج المطلوب للعملية الحسابية:</span>
+                <div id="question-box" class="text-3xl md:text-4xl font-black text-amber-300 tracking-wider font-mono">
+                    --</div>
+            </div>
+
+            <!-- الشاشتان والكيبوردان جنباً إلى جنب -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+
+                <!-- ================= اللاعب الأول (شاشتك + كيبوردك) ================= -->
+                <div class="bg-slate-900/90 border-2 border-cyan-500/60 rounded-2xl p-3 shadow-xl space-y-2">
+                    <div class="flex justify-between items-center text-xs">
+                        <span id="p1-title" class="text-cyan-400 font-bold">شاشتك (أنت)</span>
+                        <span class="text-emerald-400 font-black text-base" id="p1-score">0</span>
+                    </div>
+
+                    <div id="p1-display"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 text-xl text-center text-cyan-300 font-mono min-h-[40px] flex items-center justify-center">
+                        <span class="text-slate-600 text-xs">اكتب هنا...</span>
+                    </div>
+
+                    <!-- كيبورد اللاعب الأول -->
+                    <div class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="p1Append('1')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">1</button>
+                            <button onclick="p1Append('2')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">2</button>
+                            <button onclick="p1Append('3')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">3</button>
+                            <button onclick="p1Append('4')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">4</button>
+                            <button onclick="p1Append('5')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">5</button>
+                            <button onclick="p1Append('6')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">6</button>
+                            <button onclick="p1Append('7')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">7</button>
+                            <button onclick="p1Append('8')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">8</button>
+                            <button onclick="p1Append('9')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">9</button>
+                            <button onclick="p1Append('-')"
+                                class="keypad-btn py-2 rounded-lg text-xs font-bold text-amber-400">-</button>
+                            <button onclick="p1Append('0')"
+                                class="keypad-btn py-2 rounded-lg text-base font-bold">0</button>
+                            <button onclick="p1Clear()"
+                                class="keypad-btn py-2 rounded-lg text-[10px] font-bold text-rose-400">مسح</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="p1Backspace()"
+                                class="bg-rose-950/60 border border-rose-800 text-rose-300 py-1.5 rounded-lg text-[11px] font-bold">⌫
+                                حذف</button>
+                            <button onclick="p1Submit()"
+                                class="bg-emerald-600 text-slate-950 py-1.5 rounded-lg text-xs font-black shadow">Enter
+                                ↵</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ================= اللاعب الثاني / شاشة الخصم وكيبورده ================= -->
+                <div id="opponent-screen-box"
+                    class="bg-slate-900/90 border-2 border-rose-500/40 rounded-2xl p-3 shadow-xl space-y-2 transition">
+                    <div class="flex justify-between items-center text-xs">
+                        <span id="p2-title" class="text-rose-400 font-bold">شاشة الخصم</span>
+                        <span class="text-rose-400 font-black text-base" id="p2-score">0</span>
+                    </div>
+
+                    <div id="p2-display"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 text-xl text-center text-rose-300 font-mono min-h-[40px] flex items-center justify-center">
+                        <span class="text-slate-600 text-xs">كيبورد الخصم...</span>
+                    </div>
+
+                    <!-- كيبورد اللاعب الثاني -->
+                    <div id="p2-keypad-container"
+                        class="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800 space-y-1.5">
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="p2Append('1')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">1</button>
+                            <button onclick="p2Append('2')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">2</button>
+                            <button onclick="p2Append('3')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">3</button>
+                            <button onclick="p2Append('4')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">4</button>
+                            <button onclick="p2Append('5')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">5</button>
+                            <button onclick="p2Append('6')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">6</button>
+                            <button onclick="p2Append('7')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">7</button>
+                            <button onclick="p2Append('8')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">8</button>
+                            <button onclick="p2Append('9')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">9</button>
+                            <button onclick="p2Append('-')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-xs font-bold text-amber-400">-</button>
+                            <button onclick="p2Append('0')"
+                                class="opponent-keypad-btn py-2 rounded-lg text-base font-bold">0</button>
+                            <button onclick="p2Clear()"
+                                class="opponent-keypad-btn py-2 rounded-lg text-[10px] font-bold text-rose-400">مسح</button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button onclick="p2Backspace()"
+                                class="bg-rose-950/60 border border-rose-800 text-rose-300 py-1.5 rounded-lg text-[11px] font-bold">⌫
+                                حذف</button>
+                            <button onclick="p2Submit()"
+                                class="bg-rose-600 text-slate-950 py-1.5 rounded-lg text-xs font-black shadow">Enter
+                                ↵</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="feedback-msg" class="text-center h-4 text-xs font-bold"></div>
+
+        </div>
+
+    </main>
+
+    <footer class="text-center text-[10px] text-slate-600 py-2">
+        تحدي الرياضيات الشامل &copy; 2026
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
